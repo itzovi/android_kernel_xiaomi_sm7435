@@ -30,13 +30,13 @@ jobs:
           sudo apt install -y bc bison flex libssl-dev make libc6-dev libncurses5-dev \
             gcc-13 g++-13 clang lld python3 curl git unzip cpio libelf-dev libtfm-dev libdw-dev
 
-      - name: 🛠 Set up Clang 19.0.1 (Neutron)
+      - name: 🛠 Set up Clang 19.0.1 (Google prebuilts)
         run: |
           mkdir -p toolchains
           cd toolchains
-          curl -LO https://github.com/Neutron-Toolchains/clang-build/releases/download/19.0.1-20240415/clang-llvm-19.0.1-ubuntu.tar.xz
-          tar -xf clang-llvm-19.0.1-ubuntu.tar.xz
-          mv clang-llvm-19.0.1-ubuntu clang-19
+          curl -L -o clang-llvm-19.tar.xz https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-13.0.0_r54/clang-r437112b.tar.xz
+          tar -xf clang-llvm-19.tar.xz
+          mv clang-r437112b clang-19
           echo TOOLCHAIN_DIR=$PWD/toolchains/clang-19/bin >> $GITHUB_ENV
 
       - name: ⚙️ Compile Kernel
