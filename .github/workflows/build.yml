@@ -1,1 +1,66 @@
+name: Build SM7435 Kernel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout Kernel Source
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Clone Devicetree Repo
+      run: |
+        git clone https://github.com/garnet-random/android_kernel_xiaomi_sm7435-devicetrees arch/arm64/boot/dts/vendor
+
+    - name: Clone Kernel Modules Repo
+      run: |
+        git clone https://github.com/garnet-random/android_kernel_xiaomi_sm7435-modules modules
+
+    - name: Install Dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y bc bison flex libssl-dev make libc6-dev libncurses5-dev \
+          gcc clang python3 curl git unzip cpio libelf-dev libtfm-dev libdw-dev
+
+    - name: Download Toolchain
+      run: |
+        mkdir toolchains && cd toolchains
+        git clone --depth=1 https://github.com/kdrag0n/proton-clang clang
+        echo "TOOLCHAIN_DIR=$(pwd)/clang" >> $GITHUB_ENV
+
+    - name: Compile Kernel
+      run: |
+        export ARCH=arm64
+        export SUBARCH=arm64
+        export KBUILD_BUILD_USER=neel
+        export KBUILD_BUILD_HOST=github
+        export PATH=$TOOLCHAIN_DIR/bin:$PATH
+
+        make O=out garnet_defconfig
+        make -j$(nproc) O=out \
+          CC=clang \
+          CROSS_COMPILE=aarch64-linux-gnu- \
+          CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+          LLVM=1 LLVM_IAS=1
+
+    - name: Package Kernel (AnyKernel3)
+      run: |
+        git clone https://github.com/osm0sis/AnyKernel3
+        cp out/arch/arm64/boot/Image AnyKernel3/
+        cp out/arch/arm64/boot/dts/vendor/*.dtb AnyKernel3/ || true
+        cd AnyKernel3
+        zip -r9 Garnet-Kernel.zip ./*
+
+    - name: Upload Kernel ZIP
+      uses: actions/upload-artifact@v4
+      with:
+        name: Garnet-Kernel
+        path: AnyKernel3/Garnet-Kernel.zip
 
