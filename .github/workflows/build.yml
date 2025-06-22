@@ -37,8 +37,7 @@ jobs:
         curl -LO https://github.com/llvm/llvm-project/releases/download/llvmorg-19.0.1/clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04.tar.xz
         tar -xf clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04.tar.xz
         mv clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04 clang-19
-        tool_path=$(realpath clang-19/bin)
-        echo "TOOLCHAIN_DIR=$tool_path" >> $GITHUB_ENV
+        echo "TOOLCHAIN_DIR=$(realpath clang-19/bin)" >> $GITHUB_ENV
 
     - name: ⚙️ Compile Kernel (Host: GCC, Kernel: LLVM)
       run: |
@@ -48,11 +47,9 @@ jobs:
         export KBUILD_BUILD_HOST=github
         export PATH=$TOOLCHAIN_DIR:$PATH
 
-        # Step 1: Generate config and host tools with GCC
         make O=out gki_defconfig
         make O=out scripts
 
-        # Step 2: Compile kernel with full Clang 19
         make -j$(nproc) O=out \
           CC=clang \
           AR=llvm-ar \
