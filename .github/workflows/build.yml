@@ -24,19 +24,20 @@ jobs:
         run: |
           git clone https://github.com/itzovi/android_kernel_xiaomi_sm7435-modules modules
 
-      - name: 📦 Install Build Dependencies (incl. Clang 19 and GCC 13)
+      - name: 📦 Install Build Dependencies (Clang 18 + GCC 13)
         run: |
           sudo apt update
           sudo apt install -y bc bison flex libssl-dev make libc6-dev libncurses5-dev \
-            gcc-13 g++-13 clang-19 lld-19 python3 curl git unzip cpio libelf-dev libtfm-dev libdw-dev
+            gcc-13 g++-13 clang-18 lld-18 python3 curl git unzip cpio libelf-dev libtfm-dev libdw-dev
 
-      - name: 🛠 Set up Clang 19 and GCC 13 paths
+      - name: 🛠 Set up Clang 18 and GCC 13 paths
         run: |
-          echo "TOOLCHAIN_DIR=/usr/lib/llvm-19/bin" >> $GITHUB_ENV
+          echo "TOOLCHAIN_DIR=/usr/lib/llvm-18/bin" >> $GITHUB_ENV
           echo "GCC_DIR=/usr/bin" >> $GITHUB_ENV
 
-      - name: ⚙️ Compile Kernel
+      - name: ⚙️ Compile Kernel (Verbose)
         run: |
+          set -euxo pipefail
           export ARCH=arm64
           export SUBARCH=arm64
           export KBUILD_BUILD_USER=neel
@@ -47,17 +48,25 @@ jobs:
           make O=out scripts
 
           make -j$(nproc) O=out \
-            CC=clang-19 \
-            AR=llvm-ar-19 \
-            NM=llvm-nm-19 \
-            OBJCOPY=llvm-objcopy-19 \
-            OBJDUMP=llvm-objdump-19 \
-            STRIP=llvm-strip-19 \
-            LD=ld.lld-19 \
+            CC=clang-18 \
+            AR=llvm-ar-18 \
+            NM=llvm-nm-18 \
+            OBJCOPY=llvm-objcopy-18 \
+            OBJDUMP=llvm-objdump-18 \
+            STRIP=llvm-strip-18 \
+            LD=ld.lld-18 \
             CROSS_COMPILE=aarch64-linux-gnu- \
-            LLVM=1 LLVM_IAS=1
+            LLVM=1 LLVM_IAS=1 V=1 | tee build.log
+
+      - name: Upload build log (if exists)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
 
       - name: 📦 Package with AnyKernel3
+        if: success()
         run: |
           git clone https://github.com/osm0sis/AnyKernel3
           cp out/arch/arm64/boot/Image AnyKernel3/
@@ -66,6 +75,7 @@ jobs:
           zip -r9 Garnet-Kernel.zip ./*
 
       - name: 🚀 Upload Kernel ZIP
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Garnet-Kernel
