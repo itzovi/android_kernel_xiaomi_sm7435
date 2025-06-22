@@ -10,67 +10,67 @@ jobs:
       contents: write
 
     steps:
-    - name: 📥 Checkout Kernel Source
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: 📥 Checkout Kernel Source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: 📁 Clone Devicetree Repo
-      run: |
-        rm -rf arch/arm64/boot/dts/vendor
-        git clone https://github.com/itzovi/android_kernel_xiaomi_sm7435-devicetrees arch/arm64/boot/dts/vendor
+      - name: 📁 Clone Devicetree Repo
+        run: |
+          rm -rf arch/arm64/boot/dts/vendor
+          git clone https://github.com/itzovi/android_kernel_xiaomi_sm7435-devicetrees arch/arm64/boot/dts/vendor
 
-    - name: 📁 Clone Kernel Modules Repo
-      run: |
-        git clone https://github.com/itzovi/android_kernel_xiaomi_sm7435-modules modules
+      - name: 📁 Clone Kernel Modules Repo
+        run: |
+          git clone https://github.com/itzovi/android_kernel_xiaomi_sm7435-modules modules
 
-    - name: 📦 Install Build Dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y bc bison flex libssl-dev make libc6-dev libncurses5-dev \
-          gcc-13 g++-13 clang lld python3 curl git unzip cpio libelf-dev libtfm-dev libdw-dev
+      - name: 📦 Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y bc bison flex libssl-dev make libc6-dev libncurses5-dev \
+            gcc-13 g++-13 clang lld python3 curl git unzip cpio libelf-dev libtfm-dev libdw-dev
 
-    - name: 🛠 Download Clang 19.0.1 (LLVM)
-      run: |
-        mkdir -p toolchains
-        cd toolchains
-        curl -LO https://github.com/llvm/llvm-project/releases/download/llvmorg-19.0.1/clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04.tar.xz
-        tar -xf clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04.tar.xz
-        mv clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04 clang-19
-        echo "TOOLCHAIN_DIR=$(pwd)/toolchains/clang-19/bin" >> $GITHUB_ENV
+      - name: 🛠 Set up Clang 19
+        run: |
+          mkdir -p toolchains
+          cd toolchains
+          curl -LO https://github.com/llvm/llvm-project/releases/download/llvmorg-19.0.1/clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04.tar.xz
+          tar -xf clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04.tar.xz
+          mv clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04 clang-19
+          echo TOOLCHAIN_DIR=$PWD/toolchains/clang-19/bin >> $GITHUB_ENV
 
-    - name: ⚙️ Compile Kernel (Host: GCC, Kernel: LLVM)
-      run: |
-        export ARCH=arm64
-        export SUBARCH=arm64
-        export KBUILD_BUILD_USER=neel
-        export KBUILD_BUILD_HOST=github
-        export PATH=$TOOLCHAIN_DIR:$PATH
+      - name: ⚙️ Compile Kernel
+        run: |
+          export ARCH=arm64
+          export SUBARCH=arm64
+          export KBUILD_BUILD_USER=neel
+          export KBUILD_BUILD_HOST=github
+          export PATH=$TOOLCHAIN_DIR:$PATH
 
-        make O=out gki_defconfig
-        make O=out scripts
+          make O=out gki_defconfig
+          make O=out scripts
 
-        make -j$(nproc) O=out \
-          CC=clang \
-          AR=llvm-ar \
-          NM=llvm-nm \
-          OBJCOPY=llvm-objcopy \
-          OBJDUMP=llvm-objdump \
-          STRIP=llvm-strip \
-          LD=ld.lld \
-          CROSS_COMPILE=aarch64-linux-gnu- \
-          LLVM=1 LLVM_IAS=1
+          make -j$(nproc) O=out \
+            CC=clang \
+            AR=llvm-ar \
+            NM=llvm-nm \
+            OBJCOPY=llvm-objcopy \
+            OBJDUMP=llvm-objdump \
+            STRIP=llvm-strip \
+            LD=ld.lld \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            LLVM=1 LLVM_IAS=1
 
-    - name: 📦 Package with AnyKernel3
-      run: |
-        git clone https://github.com/osm0sis/AnyKernel3
-        cp out/arch/arm64/boot/Image AnyKernel3/
-        cp out/arch/arm64/boot/dts/vendor/*.dtb AnyKernel3/ || true
-        cd AnyKernel3
-        zip -r9 Garnet-Kernel.zip ./*
+      - name: 📦 Package with AnyKernel3
+        run: |
+          git clone https://github.com/osm0sis/AnyKernel3
+          cp out/arch/arm64/boot/Image AnyKernel3/
+          cp out/arch/arm64/boot/dts/vendor/*.dtb AnyKernel3/ || true
+          cd AnyKernel3
+          zip -r9 Garnet-Kernel.zip ./*
 
-    - name: 🚀 Upload Kernel ZIP
-      uses: actions/upload-artifact@v4
-      with:
-        name: Garnet-Kernel
-        path: AnyKernel3/Garnet-Kernel.zip
+      - name: 🚀 Upload Kernel ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Garnet-Kernel
+          path: AnyKernel3/Garnet-Kernel.zip
