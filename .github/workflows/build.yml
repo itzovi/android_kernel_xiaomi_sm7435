@@ -32,18 +32,15 @@ jobs:
 
     - name: 🛠 Download Clang 19.0.1 (LLVM)
       run: |
-        set -e
         mkdir -p toolchains
         cd toolchains
         curl -LO https://github.com/llvm/llvm-project/releases/download/llvmorg-19.0.1/clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04.tar.xz
         tar -xf clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04.tar.xz
         mv clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04 clang-19
-        TOOLCHAIN_PATH=$(realpath clang-19/bin)
-        echo TOOLCHAIN_DIR=$TOOLCHAIN_PATH >> $GITHUB_ENV
+        echo "TOOLCHAIN_DIR=$(pwd)/toolchains/clang-19/bin" >> $GITHUB_ENV
 
     - name: ⚙️ Compile Kernel (Host: GCC, Kernel: LLVM)
       run: |
-        set -e
         export ARCH=arm64
         export SUBARCH=arm64
         export KBUILD_BUILD_USER=neel
