@@ -37,7 +37,8 @@ jobs:
         curl -LO https://github.com/llvm/llvm-project/releases/download/llvmorg-19.0.1/clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04.tar.xz
         tar -xf clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04.tar.xz
         mv clang+llvm-19.0.1-x86_64-linux-gnu-ubuntu-22.04 clang-19
-        echo "TOOLCHAIN_DIR=$(realpath clang-19/bin)" >> $GITHUB_ENV
+        tool_path=$(realpath clang-19/bin)
+        echo "TOOLCHAIN_DIR=$tool_path" >> $GITHUB_ENV
 
     - name: ⚙️ Compile Kernel (Host: GCC, Kernel: LLVM)
       run: |
