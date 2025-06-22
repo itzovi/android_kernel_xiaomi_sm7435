@@ -17,11 +17,11 @@ jobs:
 
     - name: Clone Devicetree Repo
       run: |
-        git clone https://github.com/garnet-random/android_kernel_xiaomi_sm7435-devicetrees arch/arm64/boot/dts/vendor
+        git clone https://github.com/itzovi/android_kernel_xiaomi_sm7435-devicetrees arch/arm64/boot/dts/vendor
 
     - name: Clone Kernel Modules Repo
       run: |
-        git clone https://github.com/garnet-random/android_kernel_xiaomi_sm7435-modules modules
+        git clone https://github.com/itzovi/android_kernel_xiaomi_sm7435-modules modules
 
     - name: Install Dependencies
       run: |
@@ -63,4 +63,3 @@ jobs:
       with:
         name: Garnet-Kernel
         path: AnyKernel3/Garnet-Kernel.zip
-
