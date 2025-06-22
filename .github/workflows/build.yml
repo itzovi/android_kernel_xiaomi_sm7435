@@ -17,6 +17,7 @@ jobs:
 
     - name: 📁 Clone Devicetree Repo
       run: |
+        rm -rf arch/arm64/boot/dts/vendor
         git clone https://github.com/itzovi/android_kernel_xiaomi_sm7435-devicetrees arch/arm64/boot/dts/vendor
 
     - name: 📁 Clone Kernel Modules Repo
